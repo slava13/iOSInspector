@@ -31,12 +31,13 @@ final class HierarchyParser: HierarchyParsing {
             let cleanLine = trimmed.replacingOccurrences(of: "→", with: "")
             let components = cleanLine.components(separatedBy: ", ")
             let type = components.first ?? "Element"
+            let isSelected = components.contains { $0.caseInsensitiveCompare("selected") == .orderedSame }
 
             let frame = parseFrame(in: line)
             let label = extractAttribute(in: line, key: "label")
             let identifier = extractAttribute(in: line, key: "identifier")
 
-            let newNode = ViewNode(type: type, identifier: identifier, label: label, frame: frame)
+            let newNode = ViewNode(type: type, identifier: identifier, label: label, frame: frame, isSelected: isSelected)
 
             while let last = stack.last, last.indent >= indent {
                 stack.removeLast()

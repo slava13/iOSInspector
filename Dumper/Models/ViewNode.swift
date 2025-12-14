@@ -7,7 +7,24 @@ struct ViewNode: Identifiable, Hashable {
     let identifier: String?
     let label: String?
     let frame: CGRect
+    var isSelected: Bool = false
     var children: [ViewNode] = []
+
+    init(
+        type: String,
+        identifier: String?,
+        label: String?,
+        frame: CGRect,
+        isSelected: Bool = false,
+        children: [ViewNode] = []
+    ) {
+        self.type = type
+        self.identifier = identifier
+        self.label = label
+        self.frame = frame
+        self.isSelected = isSelected
+        self.children = children
+    }
 
     var childrenOrNil: [ViewNode]? {
         children.isEmpty ? nil : children
