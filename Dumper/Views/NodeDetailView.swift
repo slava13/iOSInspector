@@ -8,49 +8,65 @@ struct NodeDetailView: View {
             Text("Details")
                 .font(.headline)
 
-            if let node {
-                VStack(alignment: .leading, spacing: 8) {
-                    detailLine(title: "Element", value: node.type)
+            Group {
+                if let node {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            detailRow("Element", node.type)
 
-                    if let identifier = node.identifier, !identifier.isEmpty {
-                        detailLine(title: "Identifier", value: "'\(identifier)'")
+                            detailRowIfPresent("Identifier", node.identifier.map { "\($0)" })
+                            detailRowIfPresent("Label", node.label.map { "\($0)" })
+
+                            detailRow("Frame", format(frame: node.frame))
+                                .monospacedDigit()
+
+                            detailRow("Selected", node.isSelected ? "true" : "false")
+                        }
+                        .font(.system(size: 12, design: .monospaced))
                     }
-
-                    if let label = node.label, !label.isEmpty {
-                        detailLine(title: "Label", value: "'\(label)'")
-                    }
-
-                    detailLine(title: "Frame", value: format(frame: node.frame))
-
-                    if node.isSelected {
-                        Text("Selected")
-                    }
+                } else {
+                    Text("Select a node to see details.")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 12))
                 }
-                .font(.system(size: 12, design: .monospaced))
-            } else {
-                Text("Select a node to see details.")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 12))
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
     }
 
-    private func detailLine(title: String, value: String) -> some View {
-        Text("\(title): \(value)")
+    // MARK: - Row helpers
+
+    private func detailRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(title):")
+                .foregroundColor(.secondary)
+                .frame(width: 90, alignment: .leading) // consistent alignment
+            Text(value)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
+
+    private func detailRowIfPresent(_ title: String, _ value: String?) -> some View {
+        Group {
+            if let value, !value.isEmpty {
+                detailRow(title, value)
+            }
+        }
+    }
+
+    // MARK: - Formatting
 
     private func format(frame: CGRect) -> String {
         String(
             format: "{{%.1f, %.1f}, {%.1f, %.1f}}",
-            Double(frame.origin.x),
-            Double(frame.origin.y),
-            Double(frame.size.width),
-            Double(frame.size.height)
+            frame.origin.x,
+            frame.origin.y,
+            frame.size.width,
+            frame.size.height
         )
     }
 }
