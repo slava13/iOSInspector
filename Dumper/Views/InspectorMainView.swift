@@ -5,10 +5,8 @@ import UniformTypeIdentifiers
 @MainActor
 struct InspectorMainView: View {
     @StateObject private var viewModel: InspectorViewModel
-    @State private var isDragging = false
-    @State private var droppedURLs: [URL] = []
-    @State private var selectedNodeID: ViewNode.ID?
-    @State private var searchText = ""
+    @State private var dropState = DropHandlingState()
+    @State private var sidebarViewState = HierarchySidebarState()
 
     init() {
         _viewModel = StateObject(wrappedValue: InspectorViewModel())
@@ -33,7 +31,7 @@ struct InspectorMainView: View {
                 if viewModel.screenshot == nil {
                     DropZoneView(
                         viewModel: viewModel,
-                        isDragging: $isDragging,
+                        isDragging: $dropState.isDragging,
                         pendingImageURL: viewModel.pendingImageURL,
                         pendingHierarchyURL: viewModel.pendingHierarchyURL
                     )
@@ -41,8 +39,7 @@ struct InspectorMainView: View {
                     HSplitView {
                         HierarchySidebarView(
                             hierarchyRoot: viewModel.hierarchyRoot,
-                            selectedNodeID: $selectedNodeID,
-                            searchText: $searchText,
+                            viewState: $sidebarViewState,
                             onSelectionChange: { id in
                                 viewModel.selectedNode = viewModel.node(withID: id)
                             }
@@ -66,18 +63,18 @@ struct InspectorMainView: View {
 
                             Divider()
 
-                            NodeDetailView(node: viewModel.selectedNode)
+                            NodeDetailView(viewState: NodeDetailState(node: viewModel.selectedNode))
                                 .frame(minWidth: 240, maxWidth: 360)
                         }
                     }
                 }
             }
         }
-        .onDrop(of: [UTType.fileURL], isTargeted: $isDragging) { providers in
+        .onDrop(of: [UTType.fileURL], isTargeted: $dropState.isDragging) { providers in
             handleDrop(providers: providers)
             return true
         }
-        .onChange(of: droppedURLs) { urls in
+        .onChange(of: dropState.droppedURLs) { urls in
             processDroppedURLs(urls)
         }
     }
@@ -108,7 +105,7 @@ private extension InspectorMainView {
             viewModel.errorMessage = "Could not identify a Screenshot (.png/.jpg) or Hierarchy (.txt) file in the dropped items."
         }
 
-        droppedURLs = []
+        dropState.droppedURLs = []
     }
 
     func handleDrop(providers: [NSItemProvider]) {
@@ -128,7 +125,7 @@ private extension InspectorMainView {
         }
 
         group.notify(queue: .main) {
-            droppedURLs = urls
+            dropState.droppedURLs = urls
         }
     }
 }

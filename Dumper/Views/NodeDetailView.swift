@@ -1,53 +1,41 @@
-import SwiftUI
 import AppKit
-
-// MARK: - NodeDetailView
+import SwiftUI
 
 struct NodeDetailView: View {
-    let node: ViewNode?
+    let viewState: NodeDetailState
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Details")
                 .font(.headline)
 
-            Group {
-                if let node {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            VStack(alignment: .leading, spacing: 10) {
-                                detailRow("Element", node.type)
-
-                                detailRowIfPresent("Identifier", node.identifier)
-                                detailRowIfPresent("Label", node.label)
-
-                                detailRow("Frame", format(frame: node.frame))
-                                    .monospacedDigit()
-
-                                detailRow("Selected", node.isSelected ? "true" : "false")
-                            }
-                            .font(.system(size: 12, design: .monospaced))
-
-                            Divider()
-
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("UI Test Suggestions")
-                                    .font(.headline)
-
-                                let suggestions = LocatorSuggestionBuilder.suggestions(for: node)
-
-                                ForEach(suggestions) { suggestion in
-                                    SuggestionCard(suggestion: suggestion)
-                                }
+            if viewState.hasNode {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(viewState.detailLines, id: \.self) { line in
+                                detailRow(line.title, line.value)
                             }
                         }
-                        .padding(.bottom, 8)
+                        .font(.system(size: 12, design: .monospaced))
+
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("UI Test Suggestions")
+                                .font(.headline)
+
+                            ForEach(viewState.suggestions) { suggestion in
+                                SuggestionCard(suggestion: suggestion)
+                            }
+                        }
                     }
-                } else {
-                    Text("Select a node to see details.")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 12))
+                    .padding(.bottom, 8)
                 }
+            } else {
+                Text("Select a node to see details.")
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 12))
             }
 
             Spacer(minLength: 0)
@@ -56,8 +44,6 @@ struct NodeDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
     }
-
-    // MARK: - Row helpers
 
     private func detailRow(_ title: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -68,29 +54,7 @@ struct NodeDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-
-    private func detailRowIfPresent(_ title: String, _ value: String?) -> some View {
-        Group {
-            if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                detailRow(title, value)
-            }
-        }
-    }
-
-    // MARK: - Formatting
-
-    private func format(frame: CGRect) -> String {
-        String(
-            format: "{{%.1f, %.1f}, {%.1f, %.1f}}",
-            frame.origin.x,
-            frame.origin.y,
-            frame.size.width,
-            frame.size.height
-        )
-    }
 }
-
-// MARK: - Suggestion UI
 
 private struct SuggestionCard: View {
     let suggestion: LocatorSuggestion
@@ -119,17 +83,14 @@ private struct SuggestionCard: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
-            TextSuggestion
+
+            Text(suggestion.code)
+                .font(.system(size: 11, design: .monospaced))
+                .textSelection(.enabled)
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.secondary.opacity(0.08))
+                .cornerRadius(8)
         }
-    }
-    
-    private var TextSuggestion: some View {
-        Text(suggestion.code)
-            .font(.system(size: 11, design: .monospaced))
-            .textSelection(.enabled)
-            .padding(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.secondary.opacity(0.08))
-            .cornerRadius(8)
     }
 }
